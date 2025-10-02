@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUp, ArrowLeft, Lightbulb } from "lucide-react";
 import Link from "next/link";
+import { Reorder } from "framer-motion";
 
 interface Idea {
   id: number;
@@ -25,7 +26,7 @@ export default function IdeaBoardApp() {
       const res = await fetch("/api/ideas");
       if (!res.ok) return;
       const data = await res.json();
-      setIdeas(data);
+      setIdeas(data.sort((a: Idea, b: Idea) => b.upvotes - a.upvotes));
     } catch (err) {
       console.error("Failed to fetch ideas", err);
     }
@@ -33,21 +34,18 @@ export default function IdeaBoardApp() {
 
   useEffect(() => {
     fetchIdeas();
-
     const interval = setInterval(fetchIdeas, 5000);
-
     return () => clearInterval(interval);
   }, []);
 
   const handleIdeaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-  let value = e.target.value;
-  if (value.length > MAX_CHARS) {
-    value = value.slice(0, MAX_CHARS);
-  }
-  setNewIdea(value);
-  setCharCount(value.length);
-};
-
+    let value = e.target.value;
+    if (value.length > MAX_CHARS) {
+      value = value.slice(0, MAX_CHARS);
+    }
+    setNewIdea(value);
+    setCharCount(value.length);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,11 +66,23 @@ export default function IdeaBoardApp() {
   };
 
   const handleUpvote = async (id: number) => {
+    setIdeas((prev) =>
+      prev.map((idea) =>
+        idea.id === id ? { ...idea, upvotes: idea.upvotes + 1 } : idea
+      )
+    );
+
     const res = await fetch(`/api/ideas/${id}`, { method: "PUT" });
     if (res.ok) {
       const updated = await res.json();
       setIdeas((prev) =>
         prev.map((idea) => (idea.id === id ? updated : idea))
+      );
+    } else {
+      setIdeas((prev) =>
+        prev.map((idea) =>
+          idea.id === id ? { ...idea, upvotes: idea.upvotes - 1 } : idea
+        )
       );
     }
   };
@@ -141,19 +151,20 @@ export default function IdeaBoardApp() {
             </p>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {ideas
-              .sort((a, b) => b.upvotes - a.upvotes)
-              .map((idea) => (
-                <Card
-                  key={idea.id}
-                  className="flex gap-4 p-6 transition-all hover:shadow-md"
-                >
+          <Reorder.Group
+            axis="y"
+            values={ideas}
+            onReorder={setIdeas}
+            className="space-y-4"
+          >
+            {ideas.map((idea) => (
+              <Reorder.Item key={idea.id} value={idea}>
+                <Card className="flex gap-4 p-6 transition-all hover:shadow-md">
                   <div className="flex flex-col items-center gap-1">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-10 w-10 rounded-full bg-transparent"
+                      className="h-10 w-10 cursor-pointer rounded-full bg-transparent"
                       onClick={() => handleUpvote(idea.id)}
                     >
                       <ArrowUp className="h-4 w-4" />
@@ -167,8 +178,9 @@ export default function IdeaBoardApp() {
                     </p>
                   </div>
                 </Card>
-              ))}
-          </div>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
         )}
       </div>
     </div>
