@@ -1,73 +1,125 @@
 # The Idea Board
 
-A modern web application for sharing and voting on ideas anonymously.
+The Idea Board is a modern, real-time web application for sharing, upvoting, and discovering ideas. It empowers users to post ideas anonymously, engage with a community-driven voting system, and watch the best ideas rise to the top.
 
-## Features
+---
 
-- **Marketing Landing Page**: Compelling hero section with features and CTAs
-- **Idea Board App**: Post ideas (280 char limit), upvote, and see real-time updates
-- **Anonymous**: No login required, pure idea meritocracy
-- **Responsive Design**: Works beautifully on all devices
+## Table of Contents
+
+* [Overview](#overview)
+* [Architecture](#architecture)
+* [Getting Started](#getting-started)
+
+  * [Prerequisites](#prerequisites)
+  * [Running Locally with Docker Compose](#running-locally-with-docker-compose)
+* [API Endpoints](#api-endpoints)
+* [Features](#features)
+* [Trade-offs & Notes](#trade-offs--notes)
+
+---
+
+## Overview
+
+The Idea Board allows users to:
+
+* Post ideas anonymously (max 280 characters).
+* Upvote ideas to push them to the top.
+* View real-time updates as new ideas are added.
+* Explore an engaging landing page highlighting platform features.
+
+The frontend is built with **Next.js** and **React**, while the backend exposes RESTful API endpoints for CRUD operations on ideas.
+
+---
+
+## Architecture
+
+* **Frontend**: Next.js (React)
+
+  * Components: `LandingPage`, `IdeaBoardApp`, `Card`, `Button`, `Textarea`
+  * State management using React hooks (`useState`, `useEffect`)
+  * Periodic data fetching to enable real-time updates
+
+* **Backend**: REST API
+
+  * `GET /api/ideas` → Fetch all ideas
+  * `POST /api/ideas` → Submit a new idea
+  * `PUT /api/ideas/:id` → Upvote an idea
+
+* **Database**: Can be connected via Docker Compose (PostgreSQL, MySQL, or SQLite)
+
+* **Deployment**: Containerized using **Docker** and **Docker Compose** for consistent local and production environments.
+
+---
 
 ## Getting Started
 
-### Development
+### Prerequisites
 
-\`\`\`bash
-npm install
-npm run dev
-\`\`\`
+* [Docker](https://www.docker.com/get-started)
+* [Docker Compose](https://docs.docker.com/compose/install/)
+* Node.js (v18+ recommended for local dev if needed)
 
-Open [http://localhost:3000](http://localhost:3000) to view the landing page.
-Navigate to [http://localhost:3000/app](http://localhost:3000/app) for The Idea Board.
+---
 
-### Docker
+### Running Locally with Docker Compose
 
-Build and run with Docker Compose:
+1. Clone the repository:
 
-\`\`\`bash
+```bash
+git clone https://github.com/yourusername/the-idea-board.git
+cd the-idea-board
+```
+
+2. Build and start the containers:
+
+```bash
 docker-compose up --build
-\`\`\`
+```
 
-Or build and run manually:
+3. The app should now be running at [http://localhost:3000](http://localhost:3000)
 
-\`\`\`bash
-docker build -t idea-board .
-docker run -p 3000:3000 idea-board
-\`\`\`
+4. To stop the containers:
 
-## Tech Stack
+```bash
+docker-compose down
+```
 
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS v4
-- **UI Components**: shadcn/ui
-- **Icons**: Lucide React
-- **Storage**: localStorage (client-side persistence)
+---
 
-## Project Structure
+## API Endpoints
 
-\`\`\`
-├── app/
-│   ├── page.tsx          # Landing page
-│   ├── app/
-│   │   └── page.tsx      # Idea Board app
-│   ├── layout.tsx        # Root layout
-│   └── globals.css       # Global styles
-├── components/
-│   └── ui/               # UI components
-├── Dockerfile            # Docker configuration
-├── docker-compose.yml    # Docker Compose setup
-└── README.md
-\`\`\`
+| Method | Endpoint         | Description          | Request Body                      |
+| ------ | ---------------- | -------------------- | --------------------------------- |
+| GET    | `/api/ideas`     | Retrieve all ideas   | None                              |
+| POST   | `/api/ideas`     | Submit a new idea    | `{ "content": "Your idea here" }` |
+| PUT    | `/api/ideas/:id` | Upvote an idea by ID | None                              |
 
-## Future Enhancements
+**Notes:**
 
-- Add database integration (PostgreSQL/Supabase)
-- Real-time updates with WebSockets
-- Idea categories and filtering
-- Comment threads on ideas
-- User authentication (optional)
+* Ideas are returned in JSON format.
+* Upvotes are automatically incremented in the backend.
+
+---
+
+## Features
+
+* **Anonymous Posting**: Users can post ideas without revealing their identity.
+* **Community Voting**: Upvote ideas to influence ranking.
+* **Real-Time Updates**: Ideas automatically refresh every 5 seconds.
+* **Responsive Design**: Mobile-first, modern UI using Tailwind CSS.
+* **Landing Page**: Highlights the benefits and features of the platform.
+
+---
+
+## Trade-offs & Notes
+
+* **Real-time Updates**: Implemented with polling every 5 seconds instead of WebSockets for simplicity.
+* **State Management**: Lightweight React state without external libraries (Redux, Zustand) to keep it simple.
+* **Scalability**: Suitable for small to medium user bases; for high traffic, consider caching, database indexing, and WebSocket implementation.
+* **Security**: Anonymous posting reduces friction, but lacks authentication and rate-limiting.
+
+---
 
 ## License
 
-MIT
+This project is licensed under the MIT License.

@@ -20,19 +20,34 @@ export default function IdeaBoardApp() {
   const [charCount, setCharCount] = useState(0);
   const MAX_CHARS = 280;
 
+  const fetchIdeas = async () => {
+    try {
+      const res = await fetch("/api/ideas");
+      if (!res.ok) return;
+      const data = await res.json();
+      setIdeas(data);
+    } catch (err) {
+      console.error("Failed to fetch ideas", err);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/ideas")
-      .then((res) => res.json())
-      .then((data) => setIdeas(data));
+    fetchIdeas();
+
+    const interval = setInterval(fetchIdeas, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleIdeaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    if (value.length <= MAX_CHARS) {
-      setNewIdea(value);
-      setCharCount(value.length);
-    }
-  };
+  let value = e.target.value;
+  if (value.length > MAX_CHARS) {
+    value = value.slice(0, MAX_CHARS);
+  }
+  setNewIdea(value);
+  setCharCount(value.length);
+};
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,10 +107,20 @@ export default function IdeaBoardApp() {
               className="mb-3 min-h-[120px] resize-none"
             />
             <div className="flex items-center justify-between">
-              <span className={`text-sm ${charCount > MAX_CHARS * 0.9 ? "text-destructive" : "text-muted-foreground"}`}>
+              <span
+                className={`text-sm ${
+                  charCount > MAX_CHARS * 0.9
+                    ? "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              >
                 {charCount}/{MAX_CHARS}
               </span>
-              <Button type="submit" disabled={newIdea.trim().length === 0}>
+              <Button
+                type="submit"
+                className="cursor-pointer"
+                disabled={newIdea.trim().length === 0}
+              >
                 Post Idea
               </Button>
             </div>
@@ -111,31 +136,38 @@ export default function IdeaBoardApp() {
           <Card className="p-12 text-center">
             <Lightbulb className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
             <h3 className="mb-2 text-lg font-semibold">No ideas yet</h3>
-            <p className="text-muted-foreground">Be the first to share an idea with the community!</p>
+            <p className="text-muted-foreground">
+              Be the first to share an idea with the community!
+            </p>
           </Card>
         ) : (
           <div className="space-y-4">
-            {ideas.map((idea) => (
-              <Card key={idea.id} className="flex gap-4 p-6 transition-all hover:shadow-md">
-                <div className="flex flex-col items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 rounded-full bg-transparent"
-                    onClick={() => handleUpvote(idea.id)}
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-semibold">{idea.upvotes}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-pretty leading-relaxed">{idea.content}</p>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Posted {new Date(idea.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              </Card>
-            ))}
+            {ideas
+              .sort((a, b) => b.upvotes - a.upvotes)
+              .map((idea) => (
+                <Card
+                  key={idea.id}
+                  className="flex gap-4 p-6 transition-all hover:shadow-md"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 rounded-full bg-transparent"
+                      onClick={() => handleUpvote(idea.id)}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-semibold">{idea.upvotes}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-pretty leading-relaxed">{idea.content}</p>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Posted {new Date(idea.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </Card>
+              ))}
           </div>
         )}
       </div>
